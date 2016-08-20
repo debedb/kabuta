@@ -1,0 +1,3 @@
+[submodule "vendor/github.com/derekparker/delve"]
+	path = vendor/github.com/derekparker/delve
+	url = https://github.com/derekparker/delve.git
