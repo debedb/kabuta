@@ -21,8 +21,10 @@ const (
 	DefaultKabutaLogFile  = "kabuta.log"
 	DefaultDlvPort        = "8181"
 	DlvVersionOutputStart = "Delve Debugger"
-	RegexpMiCmd           = "([0-9]+)-(.*)"
-	RegexpCliCmd          = "([0-9]+)(.*)"
+	// MI2 command. First group is token (to include in response).
+	RegexpMiCmd = "([0-9]+)-(.*)"
+	// GDB CLI command. First group is token (to include in response).
+	RegexpCliCmd = "([0-9]+)(.*)"
 
 	GdbPrompt = "(gdb)\n"
 

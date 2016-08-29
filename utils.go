@@ -2,12 +2,14 @@ package kabuta
 
 import (
 	"bufio"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/user"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"sync"
 )
@@ -19,12 +21,53 @@ var (
 	environ map[string]string
 )
 
+func MakeGdbResult(x interface{}) string {
+	switch x.(type) {
+	// TODO this really calls for a default fallthrough behavior
+	// being a part of switch statement. I've written too many of these...
+	case int:
+		fallthrough
+	case int8:
+		fallthrough
+	case int16:
+		fallthrough
+	case int32:
+		fallthrough
+	case int64:
+		return f("\"%d\"", x)
+	case string:
+		return f("\"%s\"", x)
+	default:
+		t := reflect.TypeOf(x)
+		switch t.Kind() {
+		case reflect.Map:
+		case reflect.Array:
+			fallthrough
+		case reflect.Slice:
+		case reflect.Struct:
+		default:
+			panic("Don't know how to deal with %T %s", x, t)
+		}
+	}
+}
+
 // Environ is similar to os.Environ() but
 // returning environment as a map instead of an
 // array of strings.
 func Environ() map[string]string {
 	onceEnv.Do(initEnviron)
 	return environ
+}
+
+// Simple utility to provide a string blabla
+func String(x interface{}) string {
+	// TODO string
+	b, e := json.Marshal(x)
+	if e == nil {
+		return string(b)
+	} else {
+		return f("%+v", x)
+	}
 }
 
 func initEnviron() {

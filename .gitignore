@@ -1,0 +1,9 @@
+# Emacs artefacts
+*~
+\#*\#
+# Yeah...
+a.out
+a.out.*
+debug
+testdata/bin/**
+testdata/pkg/**

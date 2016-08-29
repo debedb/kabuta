@@ -61,7 +61,7 @@ func (s *kabuta) frontendReadLoop() {
 		}
 		if n > 0 {
 			str := strings.TrimSpace(string(b[0:n]))
-			s.log("RECEIVED %d bytes FROM FRONTEND:\n----------------\n[%s]\n------------------", n, str)
+			//			s.log("RECEIVED %d bytes FROM FRONTEND:\n----------------\n[%s]\n------------------", n, str)
 			strArr := strings.Split(str, "\n")
 			for _, str2 := range strArr {
 				str2 = strings.TrimSpace(str2)
@@ -133,7 +133,8 @@ func (k *kabuta) frontendWriteLoop() {
 	for {
 		k.writeToFrontend(GdbPrompt)
 		str := <-k.frontendChannel
-		k.log("RECEIVED %d bytes FROM FRONTEND CHANNEL:\n---------------------\n[%s]\n---------------------", len(str), str)
+		k.log("RECEIVED> %s", str)
+		//		k.log("RECEIVED %d bytes FROM FRONTEND CHANNEL:\n---------------------\n[%s]\n---------------------", len(str), str)
 		req := newFrontendRequest(k, str)
 		req.process()
 	}
@@ -154,7 +155,7 @@ func (s *kabuta) writeToFrontend(str string) {
 		s.log("Error sending %s: %v\n", str, err)
 		panic(err)
 	}
-	s.log("SENT: %d bytes:\n----------------\n%s\n------------------", n, str)
+	s.log("SENT>%s", str)
 }
 
 // frontendRequest holds information about the frontend request that

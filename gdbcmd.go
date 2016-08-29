@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	//	"github.com/derekparker/delve/service/api"
+	"github.com/derekparker/delve/service/api"
 	"github.com/derekparker/delve/service/rpc2"
 	"net/rpc/jsonrpc"
 	"os"
@@ -39,7 +40,8 @@ func (c gdbCmd) String() string {
 
 }
 
-// respond responds to the Frontend's request
+// respond responds to the Frontend's request.
+//
 func (c *gdbCmd) respond(s1 string, s2 string) {
 	r := c.frontendRequest
 	response := ""
@@ -64,6 +66,9 @@ func (c *gdbCmd) Source() (string, string, error) {
 	return noopReturner()
 }
 
+// FileExecAndSymbols is invoked in response to file-exec-and-symbols GDB MI command.
+// It determines the directory in which the "main" package being debugged lives
+// by examining information created by EnvironmentCd.
 func (c *gdbCmd) FileExecAndSymbols() (string, string, error) {
 	// This will be something like
 	// /Users/grisha/g/dev/Romana/core/bin/root
@@ -76,8 +81,18 @@ func (c *gdbCmd) FileExecAndSymbols() (string, string, error) {
 	k.log("FileExecAndSymbols(): Package directory: %s", k.debugBinaryPackageDir)
 	return noopReturner()
 }
+
+// ExecRun is invoked in response to exec-run GDB MI command.
+// It launches Delve as described in https://github.com/derekparker/delve/tree/master/Documentation/api.
+// In particular:
+//   1. Binary specified by EnvKabutaDlvPath is run
+//   2. It is run directory as determined by FileExecAndSymbols
+//   3. It is run with --headless --log --api-version-2 flags.
+//   4. It is run with the --listen flag argument set to 127.0.0.1:<PORT> where port is
+// the value of EnvKabutaDlvPort.
 func (c *gdbCmd) ExecRun() (string, string, error) {
 	var err error
+
 	k := c.frontendRequest.kabuta
 	dlv := k.dlvPath
 	dlvAddr := f("127.0.0.1:%d", k.dlvPort)
@@ -101,7 +116,6 @@ func (c *gdbCmd) ExecRun() (string, string, error) {
 		return "", "", NewError("Error running %s in %s: %s", cmdLine, k.debugBinaryPackageDir, err)
 	}
 	k.log("ExecRun(): dlv pid: %d", k.dlvCmd.Process.Pid)
-	//	jsonrpc.Dial(", address)
 	go k.dlvReadLoop(true)
 	go k.dlvReadLoop(false)
 	var line string
@@ -224,6 +238,39 @@ func (c *gdbCmd) InferiorTtySet() (string, string, error) {
 	return noopReturner()
 }
 
+// Lists threads
+func (c *gdbCmd) ThreadListIds() (string, string, error) {
+	var threads []*api.Thread
+	k := c.frontendRequest.kabuta
+	lto := rpc2.ListThreadsOut{Threads: threads}
+	err := k.dlvRpcClient.Call("RPCServer.ListThreads", rpc2.ListThreadsIn{}, &lto)
+	if err != nil {
+		return "", "", NewError("Error listing threads: %s", err)
+	}
+
+	threadIds := ""
+	threadDetails := ""
+	for i, t := range lto.Threads {
+		if i > 0 {
+			threadIds += ","
+			threadDetails += ","
+		}
+		k.log("Thread information: %s", String(t))
+		tid := f("thread-id=\"%d\"", t.GoroutineID)
+		threadIds += tid
+		// State?
+		var state string
+		if t.Breakpoint == nil {
+			state = "RUNNING"
+		} else {
+			state = "WAITING"
+		}
+		threadDetails += f("thread={%s,state=\"%s\",mach-port-number=\"0xffff\",pthread-id=\"%d\",unique-id=\"%d\"}", tid, state, t.GoroutineID, t.GoroutineID)
+	}
+	result := f("thread-ids={%s},number-of-threads=\"%d\",threads=[%s]", threadIds, len(lto.Threads), threadDetails)
+	return "", result, nil
+}
+
 func (c *gdbCmd) dontKnowError() error {
 	return NewError("Don't know how to handle \"%s\"", c)
 }
@@ -283,6 +330,7 @@ func (c *gdbCmd) EnvironmentCd() (string, string, error) {
 	if err != nil {
 		return "", "", NewError("Error setting GOPATH to \"%s\"", cwd)
 	}
+	// TODO document what's going on here.
 	grep := fmt.Sprintf("grep -r '^package main$'  %s | grep -v vendor", cwd)
 	grepCmd := exec.Command("/bin/bash", "-c", grep)
 	out, err := grepCmd.CombinedOutput()
