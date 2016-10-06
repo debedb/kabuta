@@ -1,11 +1,3 @@
-// Copyright (c) 2016 Gregory Golberg (grisha@alum.mit.edu)
-//
-// This software is licensed under MIT License:
-//
-// https://opensource.org/licenses/MIT
-
-// See README.md file for information.
-
 package kabuta
 
 import (
@@ -24,6 +16,7 @@ import (
 type kabuta struct {
 	// Current working directory
 	cwd             string
+	loadConfig      *api.LoadConfig
 	logFile         *os.File
 	frontendChannel chan string
 	dlvChannel      chan string
@@ -142,10 +135,14 @@ func (k *kabuta) frontendWriteLoop() {
 
 // log logs the message (f formats can be used).
 func (s *kabuta) log(str string, args ...interface{}) {
-	_, err = s.logFile.WriteString(f(str+"\n", args...))
+	msg := f(str+"\n", args...)
+	_, err = s.logFile.WriteString(msg)
 	if err != nil {
 		panic(err)
 	}
+	// Send info to debug stream too:
+	// https://sourceware.org/gdb/onlinedocs/gdb/GDB_002fMI-Stream-Records.html#GDB_002fMI-Stream-Records
+	s.writeToFrontend("&" + msg)
 }
 
 // writeToFrontend sends the string to stdout.
@@ -288,11 +285,14 @@ func (r *frontendRequest) gdbSummary() string {
 
 // Run runs the debugger.
 func Run() error {
+
 	conf, err := Config()
 	if err != nil {
 		return err
 	}
+
 	k := &kabuta{}
+	k.loadConfig := &api.LoadConfig{FollowPointers: true, MaxVariableRecurse: 10, MaxStringLen: 1024, MaxArrayValues: 1024, MaxStructFields: -1}
 
 	// Start logging.
 	logFileName := conf[EnvKabutaLogFile]

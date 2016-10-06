@@ -21,6 +21,14 @@ var (
 	environ map[string]string
 )
 
+func returnErrorf(s string, args ...interface{}) gdbMiResponse {
+	return gdbMiResponse{err: NewError(s, args)}
+}
+
+func returnError(err error) gdbMiResponse {
+	return gdbMiResponse{err: err}
+}
+
 func MakeGdbResult(x interface{}) string {
 	switch x.(type) {
 	// TODO this really calls for a default fallthrough behavior
@@ -41,10 +49,13 @@ func MakeGdbResult(x interface{}) string {
 		t := reflect.TypeOf(x)
 		switch t.Kind() {
 		case reflect.Map:
+			panic("Don't know how to deal with %T %s", x, t)
 		case reflect.Array:
-			fallthrough
+			panic("Don't know how to deal with %T %s", x, t)
 		case reflect.Slice:
+			panic("Don't know how to deal with %T %s", x, t)
 		case reflect.Struct:
+			panic("Don't know how to deal with %T %s", x, t)
 		default:
 			panic("Don't know how to deal with %T %s", x, t)
 		}
@@ -166,7 +177,7 @@ func NewError(err string, args ...interface{}) error {
 	if args == nil || len(args) == 0 {
 		return errors.New(err)
 	}
-	msg := fmt.Sprintf(err, args...)
+	msg := f(err, args...)
 	out := errors.New(msg)
 	return out
 }

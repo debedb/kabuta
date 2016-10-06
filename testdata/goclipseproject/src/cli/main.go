@@ -26,7 +26,7 @@ func goroutineChan(id int) {
 			fmt.Printf("goroutineChan %d sent message %s", msg)
 		default:
 		}
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(50 * time.Millisecond)
 	}
 }
 
@@ -36,7 +36,7 @@ func goroutineLock(id int) {
 		fmt.Printf("goroutineLock %d says Hi", id)
 		time.Sleep(1 * time.Nanosecond)
 		mutex.Unlock()
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(50 * time.Millisecond)
 	}
 }
 

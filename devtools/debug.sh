@@ -1,4 +1,6 @@
 #!/bin/sh
+# 
+set -x
 killall dlv 
 killall kabuta
 rm ~/kabuta.log 

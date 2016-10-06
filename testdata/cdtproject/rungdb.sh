@@ -1,3 +1,3 @@
 #!/bin/sh
-gcc -g hello.c -lpthread
-#cat gdb.txt | sudo gdb --interpreter mi2 --nx
+gcc -g main.c -lpthread
+sudo expect -f ./rungdb.expect

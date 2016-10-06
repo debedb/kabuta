@@ -1,0 +1,42 @@
+# spawn sudo gdb --interpreter mi2 --nx
+# expect -ex "Password:"
+# send_user "\nSudo password:"
+# expect_user -re "(.*)\n"
+# send "$expect_out(1,string)\n"
+
+spawn gdb --interpreter mi2 --nx
+expect -ex "(gdb)"
+send "1-gdb-set breakpoint pending on\n"
+expect -ex "(gdb)"
+send "2-gdb-set print object on\n"
+expect -ex "(gdb)"
+send "3-gdb-set print sevenbit-strings on\n"
+expect -ex "(gdb)"
+send "4-gdb-set auto-solib-add on\n"
+expect -ex "(gdb)"
+send "5-file-exec-and-symbols a.out\n"	
+expect -ex "(gdb)"
+send "6-gdb-set args goodbye again\n"
+expect -ex "(gdb)"
+send "7-gdb-set language c\n"
+expect -ex "(gdb)"
+send "8-break-insert threadFunc\n"
+expect -ex "(gdb)"
+send "9-exec-run\n"
+# We know there is a breakpoint...
+expect -ex "9*stopped"
+expect -ex "(gdb)"
+send "10-thread-list-ids\n"
+expect -ex "(gdb)"
+send "11-stack-info-depth 2\n"
+expect -ex "(gdb)"
+send "12-stack-list-frames\n"
+expect -ex "(gdb)"
+send "13info threads\n"
+expect -ex "(gdb)"
+send "14-stack-select-frame 0\n"
+expect -ex "(gdb)"
+interact
+
+
+

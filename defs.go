@@ -1,9 +1,3 @@
-// Copyright (c) 2016 Gregory Golberg (grisha@alum.mit.edu)
-//
-// This software is licensed under MIT License:
-//
-// https://opensource.org/licenses/MIT
-
 package kabuta
 
 import (
